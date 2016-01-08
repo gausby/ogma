@@ -68,10 +68,8 @@ defmodule Ogma do
       {:error, _} ->
         {:noreply, s}
       pids ->
-        for pid <- pids do
-          send(pid, message)
-      end #@todo: report indentation error on alchemist
-         {:noreply, s}
+        for pid <- pids, do: send(pid, message)
+        {:noreply, s}
     end
   end
 
