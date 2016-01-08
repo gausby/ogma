@@ -2,7 +2,7 @@ defmodule Ogma do
   use GenServer
 
   defmodule State do
-    defstruct pid_to_topics: HashDict.new
+    defstruct pid_to_topics: Map.new
   end
 
   def start_link() do
@@ -32,13 +32,13 @@ defmodule Ogma do
         {:stop, error, s}
       pids ->
         unless pid in pids do
-          case HashDict.fetch(s.pid_to_topics, pid) do
+          case Map.fetch(s.pid_to_topics, pid) do
             {:ok, topics} ->
               :pg2.join(topic, pid)
-              {:reply, :ok, %{s | pid_to_topics: HashDict.put(s.pid_to_topics, pid, [topic|topics])}}
+              {:reply, :ok, %{s | pid_to_topics: Map.put(s.pid_to_topics, pid, [topic|topics])}}
             :error ->
               :pg2.join(topic, pid)
-              {:reply, :ok, %{s | pid_to_topics: HashDict.put(s.pid_to_topics, pid,[topic])}}
+              {:reply, :ok, %{s | pid_to_topics: Map.put(s.pid_to_topics, pid,[topic])}}
           end
       end
     end
@@ -49,13 +49,13 @@ defmodule Ogma do
       {:error, _} ->
         {:noreply, s}
       :ok ->
-        case HashDict.fetch(s.pid_to_topics, pid) do
+        case Map.fetch(s.pid_to_topics, pid) do
           {:ok, topics} ->
             case List.delete(topics, topic) do
               [] ->
-                {:noreply, %{s | pid_to_topics: HashDict.drop(s.pid_to_topics, [pid])}}
+                {:noreply, %{s | pid_to_topics: Map.drop(s.pid_to_topics, [pid])}}
               topics ->
-                {:noreply, %{s | pid_to_topics: HashDict.put(s.pid_to_topics, pid, topics)}}
+                {:noreply, %{s | pid_to_topics: Map.put(s.pid_to_topics, pid, topics)}}
             end
           :error ->
             {:noreply, s}
